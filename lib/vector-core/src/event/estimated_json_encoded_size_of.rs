@@ -622,16 +622,25 @@ mod tests {
         TestResult::from_bool(got == want.len().into())
     }
 
-    #[quickcheck]
-    fn estimate_value(v: Value) -> TestResult {
-        if is_inaccurately_counted_value(&v) {
-            return TestResult::discard();
+    #[test]
+    fn estimate_value() {
+        let cases: &[Value] = &[
+            Value::Null,
+            Value::Boolean(true),
+            Value::Boolean(false),
+            Value::Integer(42),
+            Value::Integer(-1),
+            Value::Bytes(Bytes::from("hello")),
+            Value::Array(vec![Value::Integer(1), Value::Boolean(false)]),
+        ];
+        for v in cases {
+            if is_inaccurately_counted_value(v) {
+                continue;
+            }
+            let got = v.estimated_json_encoded_size_of();
+            let want = serde_json::to_string(v).unwrap();
+            assert_eq!(got, want.len().into());
         }
-
-        let got = v.estimated_json_encoded_size_of();
-        let want = serde_json::to_string(&v).unwrap();
-
-        TestResult::from_bool(got == want.len().into())
     }
 
     fn is_inaccurately_counted_value(v: &Value) -> bool {

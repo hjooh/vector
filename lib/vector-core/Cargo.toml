@@ -39,6 +39,7 @@ openssl = { version = "0.10.81", default-features = false, features = ["vendored
 parking_lot = { version = "0.12.5", default-features = false }
 pin-project.workspace = true
 proptest = { workspace = true, optional = true }
+quickcheck = { workspace = true, optional = true }
 prost-types.workspace = true
 prost.workspace = true
 quanta = { version = "0.12.6", default-features = false }
@@ -66,7 +67,6 @@ vector-config = { path = "../vector-config" }
 vector-config-common = { path = "../vector-config-common" }
 vrl.workspace = true
 cfg-if.workspace = true
-quickcheck = { workspace = true, optional = true }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 security-framework = "3.6.0"
@@ -102,8 +102,8 @@ vector-common = { path = "../vector-common", default-features = false, features 
 default = []
 lua = ["dep:mlua", "dep:tokio-stream", "vrl/lua"]
 vrl = []
-test = ["vector-common/test", "proptest"]
-generate-fixtures = ["vrl/generate-fixtures", "dep:quickcheck"]
+test = ["vector-common/test", "dep:proptest", "dep:quickcheck"]
+generate-fixtures = ["dep:proptest"]
 
 [[bin]]
 name = "generate-fixtures"

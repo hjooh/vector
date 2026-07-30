@@ -13614,7 +13614,6 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 [[package]]
 name = "vrl"
 version = "0.34.0"
-source = "git+https://github.com/vectordotdev/vrl.git?branch=main#3158cbafb4ffed840dbced6a0dec906c31aeb864"
 dependencies = [
  "aes 0.9.1",
  "aes-siv",
@@ -13688,7 +13687,6 @@ dependencies = [
  "psl",
  "psl-types",
  "publicsuffix",
- "quickcheck",
  "quoted_printable",
  "rand 0.9.4",
  "regex",

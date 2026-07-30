@@ -24,7 +24,7 @@ use super::{
 };
 use crate::config::telemetry;
 
-#[cfg(any(test, feature = "test"))]
+#[cfg(any(test, feature = "test", feature = "generate-fixtures"))]
 mod arbitrary;
 
 mod data;

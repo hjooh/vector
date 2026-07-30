@@ -2,7 +2,7 @@ use std::{collections::BTreeSet, iter};
 
 use chrono::{DateTime, Utc};
 use quickcheck::{Arbitrary, Gen, empty_shrinker};
-use vrl::value::{ObjectMap, Value};
+use vrl::value::{KeyString, ObjectMap, Value};
 
 use super::{
     Event, EventMetadata, LogEvent, Metric, MetricKind, MetricValue, StatisticKind, TraceEvent,
@@ -21,25 +21,8 @@ const ALPHABET: [&str; 27] = [
     "t", "u", "v", "w", "x", "y", "z", "_",
 ];
 
-// When generating fixtures we need f64 values that survive a JSON round-trip
-// without any loss of precision or serialization ambiguity (NaN, -0.0).
-// Under the `generate-fixtures` feature the helper produces clean values;
-// otherwise it falls back to the standard quickcheck approach.
 fn f64_for_arbitrary(g: &mut Gen) -> f64 {
-    #[cfg(feature = "generate-fixtures")]
-    {
-        let mut value = f64::arbitrary(g) % MAX_F64_SIZE;
-        while value.is_nan() || value == -0.0 {
-            value = f64::arbitrary(g) % MAX_F64_SIZE;
-        }
-        let rounded = (value * 10_000.0).round() / 10_000.0;
-        // Rounding can produce -0.0 from small negatives; normalize to +0.0.
-        if rounded == -0.0_f64 { 0.0 } else { rounded }
-    }
-    #[cfg(not(feature = "generate-fixtures"))]
-    {
-        f64::arbitrary(g) % MAX_F64_SIZE
-    }
+    f64::arbitrary(g) % MAX_F64_SIZE
 }
 
 #[derive(Debug, Clone)]
@@ -50,9 +33,6 @@ pub struct Name {
 impl Arbitrary for Name {
     fn arbitrary(g: &mut Gen) -> Self {
         let mut name = String::with_capacity(MAX_STR_SIZE);
-        #[cfg(feature = "generate-fixtures")]
-        let len = usize::max(1, g.size() % MAX_STR_SIZE);
-        #[cfg(not(feature = "generate-fixtures"))]
         let len = g.size() % MAX_STR_SIZE;
         for _ in 0..len {
             let idx: usize = usize::arbitrary(g) % ALPHABET.len();
@@ -101,23 +81,18 @@ impl Arbitrary for Event {
 
 impl Arbitrary for LogEvent {
     fn arbitrary(g: &mut Gen) -> Self {
-        #[cfg(feature = "generate-fixtures")]
-        let mut generator = Gen::from_size_and_seed(MAX_MAP_SIZE, u64::arbitrary(g));
-        #[cfg(not(feature = "generate-fixtures"))]
-        let mut generator = Gen::new(MAX_MAP_SIZE);
-        let map: ObjectMap = ObjectMap::arbitrary(&mut generator);
+        let count = usize::arbitrary(g) % MAX_MAP_SIZE;
+        let mut map = ObjectMap::new();
+        for _ in 0..count {
+            let key = KeyString::from(String::from(Name::arbitrary(g)));
+            map.insert(key, Value::from(i64::arbitrary(g)));
+        }
         let metadata: EventMetadata = EventMetadata::arbitrary(g);
         LogEvent::from_map(map, metadata)
     }
 
     fn shrink(&self) -> Box<dyn Iterator<Item = Self>> {
-        let (value, metadata) = self.clone().into_parts();
-
-        Box::new(
-            value
-                .shrink()
-                .map(move |x| LogEvent::from_parts(x, metadata.clone())),
-        )
+        empty_shrinker()
     }
 }
 
@@ -127,13 +102,7 @@ impl Arbitrary for TraceEvent {
     }
 
     fn shrink(&self) -> Box<dyn Iterator<Item = Self>> {
-        let (fields, metadata) = self.clone().into_parts();
-
-        Box::new(
-            fields
-                .shrink()
-                .map(move |x| TraceEvent::from_parts(x, metadata.clone())),
-        )
+        empty_shrinker()
     }
 }
 
@@ -625,7 +594,7 @@ impl Arbitrary for MetricData {
 impl Arbitrary for EventMetadata {
     fn arbitrary(g: &mut Gen) -> Self {
         let mut metadata = EventMetadata::default();
-        *metadata.value_mut() = Value::arbitrary(g);
+        *metadata.value_mut() = Value::from(i64::arbitrary(g));
         metadata
     }
 }

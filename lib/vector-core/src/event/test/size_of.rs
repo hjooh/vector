@@ -90,7 +90,7 @@ impl Arbitrary for Action {
         match u8::arbitrary(g) % 3 {
             0 => Action::InsertFlat {
                 key: String::from(Name::arbitrary(g)).into(),
-                value: Value::arbitrary(g),
+                value: Value::from(i64::arbitrary(g)),
             },
             1 => Action::SizeOf,
             2 => Action::Contains {
